@@ -13,7 +13,7 @@ public enum AdventOfCode {
             do {
                 let content = try String(contentsOf: url)
                 print(content)
-                return content
+                return content.trimmingCharacters(in: .whitespacesAndNewlines)
             } catch {
                 return ""
             }
