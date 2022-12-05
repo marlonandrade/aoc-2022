@@ -12,8 +12,13 @@ public enum AdventOfCode {
             
             do {
                 let content = try String(contentsOf: url)
-                print(content)
-                return content.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmed = String(
+                    "-\(content)"
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .dropFirst()
+                )
+                print(trimmed)
+                return trimmed
             } catch {
                 return ""
             }
