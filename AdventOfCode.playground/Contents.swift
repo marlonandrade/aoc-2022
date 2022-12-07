@@ -12,6 +12,9 @@
 //
 //let day05 = AdventOfCode.Day05.run()
 //print(day05)
+//
+//let day06 = AdventOfCode.Day06.run()
+//print(day06)
 
-let day06 = AdventOfCode.Day06.run()
-print(day06)
+let day07 = AdventOfCode.Day07.run()
+print(day07)
