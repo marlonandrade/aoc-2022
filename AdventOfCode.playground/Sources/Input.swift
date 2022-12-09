@@ -4,6 +4,7 @@ public enum AdventOfCode {
     public enum Input: String {
         case sample
         case input
+        case other
         
         func content(for day: String) -> String {
             guard let url = Bundle.main.url(forResource: day, withExtension: rawValue) else {
