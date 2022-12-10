@@ -9,7 +9,7 @@ public extension AdventOfCode {
     }
 
     struct Result {
-        let value: [String]
+        public let value: [String]
 
         init(@ResultBuilder builder: () -> [String]) {
             value = builder()
