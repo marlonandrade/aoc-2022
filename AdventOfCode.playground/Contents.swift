@@ -28,6 +28,9 @@
 //let day10 = AdventOfCode.Day10.run()
 //print(day10)
 //day10.value.forEach { print($0) }
+//
+//let day11 = AdventOfCode.Day11.run()
+//print(day11)
 
-let day11 = AdventOfCode.Day11.run()
-print(day11)
+let day12 = AdventOfCode.Day12.run()
+print(day12)
