@@ -14,98 +14,73 @@ public extension AdventOfCode {
                 abs(point.x - other.x) + abs(point.y - other.y)
             }
 
-            func blockedPositions(at row: Int, maxCoordinate: Int? = nil) -> Set<Point> {
-                var blocked: Set<Point> = []
-                for sensor in sensors {
-                    let maxDistance = distance(between: sensor.position, other: sensor.beacon)
-                    let distance = abs(sensor.position.y - row)
-                    if distance <= maxDistance {
-                        let delta = maxDistance - distance
-                        for i in (0...delta) {
-                            let addLeft: Bool
-                            let addRight: Bool
-                            if let maxCoordinate {
-                                addLeft = sensor.position.x - i > 0
-                                addRight = sensor.position.x + i <= maxCoordinate
-                            } else {
-                                addLeft = true
-                                addRight = true
-                            }
-
-                            if addLeft {
-                                let left = Point(x: sensor.position.x - i, y: row)
-                                blocked.insert(left)
-                            }
-
-                            if addRight {
-                                let right = Point(x: sensor.position.x + i, y: row)
-                                blocked.insert(right)
-                            }
+            private func process(row: Int, maxCoordinate: Int? = nil) -> (range: ClosedRange<Int>, blocked: Set<Int>) {
+                var ranges = sensors.compactMap { sensor in
+                    let distance = distance(between: sensor.position, other: sensor.beacon)
+                    let vertical = abs(sensor.position.y - row)
+                    if vertical < distance {
+                        let horizontal = distance - vertical
+                        if let maxCoordinate {
+                            let min = Swift.max(sensor.position.x - horizontal, 0)
+                            let max = Swift.min(sensor.position.x + horizontal, maxCoordinate)
+                            return (min: min, max: max)
+                        } else {
+                            let min = sensor.position.x - horizontal
+                            let max = sensor.position.x + horizontal
+                            return (min: min, max: max)
                         }
                     }
+                    return nil
+                }.sorted { $0.min < $1.min }
+
+                guard var current = ranges.popFirst() else {
+                    return (range: 0...0, blocked: [])
                 }
-                return blocked
+
+                var blocked: Set<Int> = []
+                ranges.forEach { range in
+                    if range.min >= current.min,
+                       range.max <= current.max {
+                        // skip
+                    } else if range.min >= current.min,
+                              range.min <= current.max,
+                              range.max > current.max {
+                        current = (min: current.min, max: range.max)
+                    } else {
+                        blocked.formUnion(current.min...current.max)
+                        current = range
+                    }
+                }
+
+                let range = current.min...current.max
+                return (range: range, blocked: blocked)
             }
 
             func positionsWithoutBeacon(at row: Int) -> Int {
-                var blocked = blockedPositions(at: row)
-                sensors.flatMap { [$0.position, $0.beacon] }
-                    .filter { $0.y == row }
-                    .forEach {
-                        blocked.remove($0)
-                    }
-                return blocked.count
+                var (range, blocked) = process(row: row)
+
+                let beacons = Set(
+                    sensors
+                        .map(\.beacon)
+                        .filter { $0.y == row }
+                        .map(\.x)
+                )
+
+                if blocked.isEmpty {
+                    return range.count - beacons.count
+                } else {
+                    blocked.formUnion(range)
+                    blocked.subtract(beacons)
+                    return blocked.count
+                }
             }
 
             func tunningFrequency(maxCoordinate: Int) -> Int {
-                let range = 0...maxCoordinate
-                var distress: Point?
-
-                outer: for i in range {
-                    if i % 10000 == 0 {
-                        print("Row \(i) out of \(maxCoordinate)")
+                for row in 0...maxCoordinate {
+                    let (range, _) = process(row: row, maxCoordinate: maxCoordinate)
+                    if range.count < (maxCoordinate + 1) {
+                        return (range.lowerBound - 1) * 4000000 + row
                     }
-
-                    var j = 0
-                    repeat {
-                        let point = Point(x: j, y: i)
-                        var current: Point?
-
-                        let closest = sensors
-                            .filter { distance(between: $0.position, other: point) <= distance(between: $0.position, other: $0.beacon) }
-                            .min { distance(between: $0.position, other: point) < distance(between: $1.position, other: point) }
-
-                        guard let closest else {
-                            distress = Point(x: j, y: i)
-                            break outer
-                        }
-
-                        if point == closest.beacon {
-                            current = closest.beacon
-                            j += 1
-                        } else {
-                            let maxDistance = distance(between: closest.position, other: closest.beacon)
-                            if point == closest.position {
-                                current = closest.position
-                                j += (maxDistance + 1)
-                            } else {
-                                let d = distance(between: point, other: closest.position)
-                                if d <= maxDistance {
-                                    current = Point(x: j, y: i)
-                                    j += (maxDistance - d + 1)
-                                }
-                            }
-                        }
-
-                        if current == nil {
-                            distress = Point(x: j, y: i)
-                            break outer
-                        }
-                    } while j < maxCoordinate
-                }
-
-                if let distress {
-                    return distress.x * 4000000 + distress.y
                 }
 
                 return 0
